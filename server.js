@@ -55,6 +55,21 @@ async function sendVerificationEmail(toEmail, verificationToken) {
     try {
         const info = await transporter.sendMail(mailOptions);
         console.log(`[EMAIL] Verification email sent to ${toEmail}. Message ID: ${info.messageId}`);
+        
+        if (db) {
+            try {
+                await db.collection('sending_emails').insertOne({
+                    to: toEmail,
+                    subject: mailOptions.subject,
+                    content: mailOptions.html || mailOptions.text,
+                    type: 'verification',
+                    messageId: info.messageId,
+                    timestamp: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Hong_Kong", hour12: false }).replace(" ", "T") + "+08:00"
+                });
+            } catch (logErr) {
+                console.error("[EMAIL] Error logging email:", logErr);
+            }
+        }
         return info;
     } catch (error) {
         console.error("[EMAIL] Error sending verification email:", error);
@@ -75,6 +90,21 @@ async function sendConfirmationEmail(toEmail) {
     try {
         const info = await transporter.sendMail(mailOptions);
         console.log(`[EMAIL] Confirmation email sent to ${toEmail}. Message ID: ${info.messageId}`);
+
+        if (db) {
+            try {
+                await db.collection('sending_emails').insertOne({
+                    to: toEmail,
+                    subject: mailOptions.subject,
+                    content: mailOptions.html || mailOptions.text,
+                    type: 'confirmation',
+                    messageId: info.messageId,
+                    timestamp: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Hong_Kong", hour12: false }).replace(" ", "T") + "+08:00"
+                });
+            } catch (logErr) {
+                console.error("[EMAIL] Error logging email:", logErr);
+            }
+        }
         return info;
     } catch (error) {
         console.error("[EMAIL] Error sending email:", error);
@@ -104,6 +134,21 @@ async function sendPasswordResetEmailSMTP(toEmail, resetLink) {
     try {
         const info = await transporter.sendMail(mailOptions);
         console.log(`[EMAIL] Password reset email sent to ${toEmail}. Message ID: ${info.messageId}`);
+
+        if (db) {
+            try {
+                await db.collection('sending_emails').insertOne({
+                    to: toEmail,
+                    subject: mailOptions.subject,
+                    content: mailOptions.html || mailOptions.text,
+                    type: 'reset_password',
+                    messageId: info.messageId,
+                    timestamp: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Hong_Kong", hour12: false }).replace(" ", "T") + "+08:00"
+                });
+            } catch (logErr) {
+                console.error("[EMAIL] Error logging email:", logErr);
+            }
+        }
         return info;
     } catch (error) {
         console.error("[EMAIL] Error sending password reset email:", error);
@@ -137,13 +182,15 @@ app.use((req, res, next) => {
 const uri = process.env.MONGODB_URL || process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || 'firebase';
 let db;
+let client; // Expose client locally
 
 async function connectToMongo() {
     try {
         if (!uri) {
             throw new Error("MONGODB_URL or MONGODB_URI is not defined in environment variables");
         }
-        const client = new MongoClient(uri);
+
+        client = new MongoClient(uri); // Assign to global
         await client.connect();
 
         console.log(`[DB] Connected successfully to MongoDB at ${uri.split('@')[1] || 'localhost'}`);
@@ -222,6 +269,34 @@ app.post('/api/reset-password', async (req, res) => {
         );
 
         console.log(`[API] Password updated for user: ${user.email}`);
+
+        // Log reset password event
+        // Use 'logins' database as requested
+        const loginsCollection = db.collection('logins');
+        // We often don't have the IP in the request body for reset-password form, but we can extract it from connection
+        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip; 
+        // Note: getClientIp helper is defined lower in the file, we can duplicate logic or move helper up. 
+        // For simplicity and avoiding massive refactor, I'll use the request directly or move helper if needed.
+        // Actually getClientIp is defined at line 430. I cannot use it easily here without moving it.
+        // I will just use `req.ip` or standard header check here for now, or assume the user wants me to use the helper which would require moving it.
+        // Let's look at getClientIp at 430. I'll simply duplicate the small logic to be safe and self-contained or better, move getClientIp to top?
+        // Moving getClientIp is cleaner but touches more lines. I'll just replicate the simple extraction:
+        const clientIp = req.query.client_ip || req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.ip;
+
+        // Use getHKTimestamp if available (it is defined at line 435, so NOT available here at line 200~).
+        // I need to use `new Date()` or check where getHKTimestamp is defined.
+        // getHKTimestamp is defined at line 435. So I cannot use it here.
+        // I will just use `new Date()` for now, or define a local ISO string.
+        const timestamp = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Hong_Kong", hour12: false }).replace(" ", "T") + "+08:00";
+
+        await loginsCollection.insertOne({
+            uid: user.uid,
+            email: user.email,
+            ip: clientIp,
+            action: 'change_password',
+            timestamp: timestamp
+        });
+
         res.json({ success: true, message: 'Password updated successfully' });
 
     } catch (error) {
@@ -262,6 +337,21 @@ app.post('/api/forgot-password', async (req, res) => {
         await sendPasswordResetEmailSMTP(email, resetLink);
 
         console.log(`[API] Password reset link sent to ${email}`);
+
+        // Log reset password request event
+        const loginsCollection = db.collection('logins');
+        const clientIp = req.query.client_ip || req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.ip;
+        const timestamp = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Hong_Kong", hour12: false }).replace(" ", "T") + "+08:00";
+
+        // Note: We use user.uid since 'user' was found above
+        await loginsCollection.insertOne({
+            uid: user.uid,
+            email: user.email,
+            ip: clientIp,
+            action: 'reset_password', // This logs the "email sent" event as requested
+            timestamp: timestamp
+        });
+
         res.json({ success: true, message: 'Password reset link sent' });
 
     } catch (error) {
@@ -468,6 +558,13 @@ app.post('/api/users', async (req, res) => {
         // If it's a new user (first time save), add createdAt
         // We use upsert, so we can't easily distinguish insert vs update for createdAt efficiently in one go without $setOnInsert
         // But sending createdAt from client or just setting it if missing is fine.
+
+        // Cleanup: Remove any other user records with this email but different UID
+        // This prevents duplicate emails in DB if a Firebase user is deleted and re-created
+        await usersCollection.deleteMany({ 
+            email: email, 
+            uid: { $ne: uid } 
+        });
 
         const result = await usersCollection.updateOne(
             { uid: uid },
