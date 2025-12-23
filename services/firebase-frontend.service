@@ -1,0 +1,14 @@
+[Unit]
+Description=Firebase Login Frontend Service
+After=network.target
+
+[Service]
+Type=simple
+User=alan
+WorkingDirectory=/var/www/html/firebase-login
+ExecStart=/bin/bash /var/www/html/firebase-login/start-frontend.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

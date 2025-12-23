@@ -1,0 +1,393 @@
+:root {
+  --primary-color: #ffffff;
+  --border-color: rgba(255, 255, 255, 0.3);
+  --bg-gradient-start: #3b406e;
+  --bg-gradient-end: #1e1f35;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', 'Inter', sans-serif;
+  background: linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.container {
+  background: rgba(60, 64, 110, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 40px;
+  width: 360px;
+  text-align: left;
+  /* Aligned left as per image */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+  margin-top: 0;
+  margin-bottom: 30px;
+  font-size: 1.5rem;
+  font-weight: 500;
+  /* Regular weight */
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.input-field {
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  /* Slightly grounded */
+  background: transparent;
+  color: #fff;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input-field::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn {
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  background: transparent;
+  color: #fff;
+  transition: background 0.2s ease;
+  width: 100%;
+  display: flex;
+  /* For centering content/icon */
+  justify-content: center;
+  /* Center text */
+  align-items: center;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: none;
+  /* Removed lift effect for cleaner feel */
+}
+
+.primary-btn {
+  /* Using same style as generic btn to match the 'outline' look of the image */
+  background: transparent;
+  border: 1px solid var(--border-color);
+}
+
+.primary-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+}
+
+.logout-btn {
+  background: rgba(229, 57, 53, 0.2);
+  border-color: #e53935;
+  color: #ff8a80;
+}
+
+.toggle-text {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  /* Keep toggle text centered */
+}
+
+.toggle-link {
+  color: #fff;
+  cursor: pointer;
+  margin-left: 5px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.toggle-link:hover {
+  text-decoration: underline;
+}
+
+.error-msg {
+  color: #ff8a80;
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+
+.success-msg {
+  color: #81c784;
+  margin-top: 4px;
+  font-size: 0.95rem;
+}
+
+.profile-info {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-info p {
+  margin: 0.75rem 0;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.profile-info strong {
+  color: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  display: inline-block;
+  min-width: 120px;
+}
+
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-wrapper .input-field {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.reveal-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.reveal-btn:hover {
+  color: #fff;
+  transform: translateY(-50%) scale(1.05);
+}
+
+/* Modal Dialog Styles */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.dialog-box {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px) saturate(180%);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  animation: slideUp 0.3s ease;
+}
+
+.dialog-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.dialog-icon.error {
+  color: #ff5252;
+}
+
+.dialog-icon.success {
+  color: #4caf50;
+}
+
+.dialog-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.dialog-message {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dialog-btn {
+  min-width: 120px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.spinner {
+  border: 5px solid rgba(255, 255, 255, 0.1);
+  border-left-color: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  border-top-color: hsl(var(--primary-h), var(--primary-s), calc(var(--primary-l) + 10%));
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Tooltip & Validation Icons */
+.validation-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2em;
+  cursor: help;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.validation-icon.success {
+  color: #4caf50;
+  cursor: default;
+}
+
+.validation-icon.error {
+  color: #ff5252;
+}
+
+.tooltip {
+  visibility: hidden;
+  width: max-content;
+  max-width: 200px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px 12px;
+  position: absolute;
+  z-index: 10;
+  bottom: 140%;
+  /* Position above */
+  right: 0;
+  /* Align right */
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.8rem;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  white-space: normal;
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 10px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+}
+
+.validation-icon:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Strength Meter */
+.strength-meter {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+  height: 4px;
+  width: 100%;
+}
+
+.strength-bar {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  transition: background 0.3s ease;
+}
+
+.strength-weak .bar-1 {
+  background-color: #ff5252;
+}
+
+.strength-medium .bar-1,
+.strength-medium .bar-2 {
+  background-color: #ffa726;
+}
+
+.strength-strong .bar-1,
+.strength-strong .bar-2,
+.strength-strong .bar-3 {
+  background-color: #4caf50;
+}
+
+.strength-label {
+  font-size: 0.8rem;
+  margin-top: 4px;
+  text-align: right;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
