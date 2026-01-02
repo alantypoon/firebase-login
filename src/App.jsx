@@ -1,6 +1,6 @@
 // src/App.jsx
 import React, { useState, useEffect } from "react";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, fetchSignInMethodsForEmail } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, fetchSignInMethodsForEmail, onAuthStateChanged } from "firebase/auth";
 
 import { auth } from "./firebase";
 
@@ -68,7 +68,7 @@ export default function App() {
     // DEBUG_TESTING = true; // Toggle this to false in production
 
     const [email, setEmail] = useState(DEBUG_TESTING ? "alantypoon@gmail.com" : "");
-    const [password, setPassword] = useState(DEBUG_TESTING ? "1DuHklS9PV3x" : "");
+    const [password, setPassword] = useState(DEBUG_TESTING ? "Uncertain829!" : "");
     const [isLogin, setIsLogin] = useState(true);
     const [user, setUser] = useState(null);
     const [userProfile, setUserProfile] = useState(null);
@@ -82,7 +82,7 @@ export default function App() {
     const [country, setCountry] = useState(DEBUG_TESTING ? "Hong Kong" : "");
     const [institution, setInstitution] = useState(DEBUG_TESTING ? "HKU" : "");
     const [showPassword, setShowPassword] = useState(false);
-    const [confirmPassword, setConfirmPassword] = useState(DEBUG_TESTING ? "1DuHklS9PV3x" : "");
+    const [confirmPassword, setConfirmPassword] = useState(DEBUG_TESTING ? "Uncertain829!" : "");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Email Check Logic
@@ -120,6 +120,43 @@ export default function App() {
             checkEmailAvailability(email);
         }
     };
+
+    // Listen for Firebase auth state changes
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+            if (currentUser) {
+                // Check verification status based on email service
+                let isVerified = false;
+                if (EMAIL_SERVICE === 'FIREBASE') {
+                    isVerified = currentUser.emailVerified;
+                } else {
+                    // For SMTP, check verification status from backend
+                    try {
+                        const verifyResponse = await fetch(`/api/verification-status/${currentUser.uid}`);
+                        const verifyData = await verifyResponse.json();
+                        isVerified = verifyData.verified;
+                    } catch (err) {
+                        console.error("Error checking verification status:", err);
+                        isVerified = false;
+                    }
+                }
+
+                if (isVerified) {
+                    setUser(currentUser);
+                } else {
+                    // User exists but not verified
+                    setUser(null);
+                }
+            } else {
+                // No user logged in - this fires on logout
+                setUser(null);
+                setUserProfile(null);
+            }
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, []);
 
     const handleForgotPassword = async () => {
         if (!email) {
@@ -422,6 +459,10 @@ export default function App() {
         }
         await auth.signOut();
         setUser(null);
+        setUserProfile(null);
+
+        // reload instead of showing blank screen
+        window.location.reload();
     };
 
     const renderDialog = () => (
