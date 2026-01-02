@@ -458,10 +458,15 @@ export default function App() {
             }
         }
         await auth.signOut();
-        setUser(null);
         setUserProfile(null);
+        setUser(null);
 
         // reload instead of showing blank screen
+        showLoginScreen();
+    };
+    const showLoginScreen = () => {
+        setIsLogin(true);
+        setShowDialog(false);
         window.location.reload();
     };
 
